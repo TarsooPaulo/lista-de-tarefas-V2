@@ -2,6 +2,7 @@ import { useState, FormEvent, ChangeEvent } from 'react';
 import { toast, ToastContainer } from 'react-toastify';
 import { User, Lock, Type } from 'lucide-react';
 import 'react-toastify/dist/ReactToastify.css';
+const apiUrl = process.env.REACT_APP_API_URL;
 
 interface LoginFormProps {
   onLoginSuccess: (token: string, userData: { id: string; name: string; username: string }) => void;
@@ -33,8 +34,8 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps): JSX.Eleme
     setLoading(true);
 
     const endpoint = isRegistering 
-      ? 'http://localhost:5000/api/auth/register' 
-      : 'http://localhost:5000/api/auth/login';
+      ? `${apiUrl}/api/auth/register` 
+      : `${apiUrl}/api/auth/login`;
 
     const payload = isRegistering 
       ? { name: name.trim(), username: username.trim(), password } 
@@ -56,7 +57,7 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps): JSX.Eleme
       if (isRegistering) {
         toast.success('Conta criada com sucesso!');
         
-        const loginResponse = await fetch('http://localhost:5000/api/auth/login', {
+        const loginResponse = await fetch(`${apiUrl}/api/auth/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username: username.trim(), password })
