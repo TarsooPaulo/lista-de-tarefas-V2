@@ -33,8 +33,8 @@ Certifique-se de ter o [Node.js](https://nodejs.org/) e o [Git](https://git-scm.
 ### 1. Clonar o repositório
 
 ```bash
-git clone [https://github.com/SEU-USUARIO/SEU-REPOSITORIO.git](https://github.com/SEU-USUARIO/SEU-REPOSITORIO.git)
-cd SEU-REPOSITORIO
+git clone https://github.com/TarsooPaulo/lista-de-tarefas-V2.git
+cd lista-de-tarefas-V2
 ```
 
 ### 2. Configurar e Executar o Back-end
@@ -81,16 +81,10 @@ Instale as dependências:
 npm install
 ```
 
-Crie um arquivo `.env` na raiz da pasta `frontend`:
-
-```env
-VITE_API_URL=http://localhost:5000
-```
-
 Inicie o servidor de desenvolvimento do front-end:
 
 ```bash
-npm run dev
+npm run start
 ```
 
 Acesse a aplicação no navegador através do endereço indicado no terminal (geralmente `http://localhost:3000`).
