@@ -1,8 +1,11 @@
 import { useState, FormEvent, ChangeEvent } from 'react';
 import { toast, ToastContainer } from 'react-toastify';
 import { User, Lock, Type } from 'lucide-react';
-import 'react-toastify/dist/ReactToastify.css';
-const apiUrl = process.env.REACT_APP_API_URL;
+import 'react-toastify/compat/react-toastify.css';
+
+// Compatibilidade segura para Create React App ou Vite
+const rawApiUrl = process.env.REACT_APP_API_URL || (import.meta as any).env?.VITE_API_URL || '';
+const apiUrl = rawApiUrl.replace(/\/$/, '');
 
 interface LoginFormProps {
   onLoginSuccess: (token: string, userData: { id: string; name: string; username: string }) => void;
@@ -21,14 +24,36 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps): JSX.Eleme
     setName(filteredValue);
   };
 
+  // Função auxiliar para fazer fetch e tratar JSON com segurança (evita Unexpected end of JSON input)
+  const safeFetchJson = async (url: string, options: RequestInit) => {
+    const response = await fetch(url, options);
+    const text = await response.text();
+    
+    let data;
+    try {
+      data = text ? JSON.parse(text) : {};
+    } catch {
+      throw new Error(`Erro no servidor (Status ${response.status}). Resposta inválida.`);
+    }
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Ocorreu um erro ao processar a solicitação.');
+    }
+
+    return data;
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
-    if (isRegistering) {
-      if (name.trim().length < 2) {
-        toast.error('Por favor, digite um nome válido.');
-        return;
-      }
+    if (!apiUrl) {
+      toast.error('URL da API não configurada nas variáveis de ambiente.');
+      return;
+    }
+
+    if (isRegistering && name.trim().length < 2) {
+      toast.error('Por favor, digite um nome válido.');
+      return;
     }
 
     setLoading(true);
@@ -42,32 +67,21 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps): JSX.Eleme
       : { username: username.trim(), password };
 
     try {
-      const response = await fetch(endpoint, {
+      const data = await safeFetchJson(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Ocorreu um erro ao processar a solicitação.');
-      }
-
       if (isRegistering) {
         toast.success('Conta criada com sucesso!');
         
-        const loginResponse = await fetch(`${apiUrl}/api/auth/login`, {
+        // Login automático após registrar
+        const loginData = await safeFetchJson(`${apiUrl}/api/auth/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username: username.trim(), password })
         });
-
-        const loginData = await loginResponse.json();
-
-        if (!loginResponse.ok) {
-          throw new Error('Conta criada, mas erro ao entrar automaticamente.');
-        }
 
         toast.success(`Bem-vindo(a), ${loginData.user.name}!`);
         onLoginSuccess(loginData.token, loginData.user);
@@ -95,7 +109,6 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps): JSX.Eleme
         <ToastContainer position="top-right" autoClose={3000} />
 
         <div className="w-full max-w-md border border-gray-300 rounded-xl p-8 bg-white shadow-sm">
-          
           <div className="text-center mb-6">
             <h2 className="text-2xl font-bold text-gray-900">
               {isRegistering ? 'Criar uma conta' : 'Entrar na sua conta'}
