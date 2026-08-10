@@ -2,6 +2,7 @@ import { useState, useEffect, FormEvent } from 'react';
 import { toast, ToastContainer } from 'react-toastify';
 import { Plus, SquarePen, Trash2, Check, X } from 'lucide-react';
 import 'react-toastify/dist/ReactToastify.css';
+const apiUrl = process.env.REACT_APP_API_URL;
 
 interface BodyProps {
   token: string;
@@ -24,7 +25,7 @@ export default function Body({ token }: BodyProps): JSX.Element {
   useEffect(() => {
     const fetchTasks = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/tasks', {
+        const response = await fetch(`${apiUrl}/api/tasks`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }

@@ -30,11 +30,9 @@ async function iniciarServidor() {
   try {
     // Tenta conectar ao MongoDB Atlas usando a string do .env
     await mongoose.connect(process.env.MONGO_URI);
-    console.log('✅ Sucesso: Conectado ao cluster do MongoDB Atlas!');
 
     // Sobe o servidor Express
     app.listen(PORT, () => {
-      console.log(`🚀 Servidor Express rodando na porta ${PORT}`);
     });
   } catch (error) {
     console.error('❌ Erro crítico: Falha ao conectar ao MongoDB:', error.message);
