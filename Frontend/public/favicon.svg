@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <!-- Fundo escuro minimalista alinhado à UI da V2 -->
+  <rect width="512" height="512" rx="120" fill="#000000"/>
+  
+  <!-- Ícone do Check em branco -->
+  <path 
+    d="M160 260 L230 330 L350 180" 
+    fill="none" 
+    stroke="#FFFFFF" 
+    stroke-width="44" 
+    stroke-linecap="round" 
+    stroke-linejoin="round"
+  />
+</svg>
