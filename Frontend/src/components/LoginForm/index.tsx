@@ -1,7 +1,7 @@
 import { useState, FormEvent, ChangeEvent } from 'react';
 import { toast, ToastContainer } from 'react-toastify';
 import { User, Lock, Type } from 'lucide-react';
-import 'react-toastify/compat/react-toastify.css';
+import 'react-toastify/dist/ReactToastify.css';
 
 // Compatibilidade segura para Create React App ou Vite
 const rawApiUrl = process.env.REACT_APP_API_URL || (import.meta as any).env?.VITE_API_URL || '';
@@ -24,7 +24,6 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps): JSX.Eleme
     setName(filteredValue);
   };
 
-  // Função auxiliar para fazer fetch e tratar JSON com segurança (evita Unexpected end of JSON input)
   const safeFetchJson = async (url: string, options: RequestInit) => {
     const response = await fetch(url, options);
     const text = await response.text();
@@ -76,7 +75,6 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps): JSX.Eleme
       if (isRegistering) {
         toast.success('Conta criada com sucesso!');
         
-        // Login automático após registrar
         const loginData = await safeFetchJson(`${apiUrl}/api/auth/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
