@@ -26,6 +26,16 @@ interface Task {
   completed: boolean;
 }
 
+// O MongoDB/Mongoose retorna `_id` no JSON, mas o frontend usa `id`.
+// Esta função normaliza o objeto para garantir que `id` esteja sempre presente.
+function normalizeTask(raw: any): Task {
+  return {
+    id: raw._id || raw.id,
+    title: raw.title,
+    completed: raw.completed ?? false,
+  };
+}
+
 // ── Styled MUI Components (cabeçalho preto, linhas limpas) ──────────────
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
@@ -77,7 +87,7 @@ export default function Body({ token }: BodyProps): JSX.Element {
 
         if (!response.ok) throw new Error('Erro ao carregar tarefas.');
         const data = await response.json();
-        setTasks(data);
+        setTasks(data.map(normalizeTask));
       } catch (err: any) {
         toast.error(err.message || 'Erro ao conectar ao servidor.');
       } finally {
@@ -114,7 +124,7 @@ export default function Body({ token }: BodyProps): JSX.Element {
 
       if (!response.ok) throw new Error('Erro ao criar tarefa.');
 
-      const createdTask = await response.json();
+      const createdTask = normalizeTask(await response.json());
       setTasks([...tasks, createdTask]);
       setNewTaskTitle('');
       toast.success('Tarefa adicionada com sucesso!');
@@ -168,7 +178,7 @@ export default function Body({ token }: BodyProps): JSX.Element {
 
       if (!response.ok) throw new Error('Erro ao editar tarefa.');
 
-      const updatedTask = await response.json();
+      const updatedTask = normalizeTask(await response.json());
       setTasks(tasks.map((t) => (t.id === editingTaskId ? updatedTask : t)));
       setEditingTaskId(null);
       setEditingTitle('');
