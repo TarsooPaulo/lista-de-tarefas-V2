@@ -4,7 +4,7 @@ import { User, Lock, Type } from 'lucide-react';
 import 'react-toastify/dist/ReactToastify.css';
 
 // Compatibilidade segura para Create React App ou Vite
-const rawApiUrl = process.env.REACT_APP_API_URL || (import.meta as any).env?.VITE_API_URL || '';
+const rawApiUrl = (process.env?.REACT_APP_API_URL || (import.meta as any).env?.VITE_API_URL || '') as string;
 const apiUrl = rawApiUrl.replace(/\/$/, '');
 
 interface LoginFormProps {
