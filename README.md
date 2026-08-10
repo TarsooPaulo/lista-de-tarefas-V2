@@ -81,7 +81,7 @@ Instale as dependências:
 npm install
 ```
 
-Crie um arquivo `.env.local` na raiz da pasta `frontend`:
+Crie um arquivo `.env` na raiz da pasta `frontend`:
 
 ```env
 VITE_API_URL=http://localhost:5000
@@ -93,7 +93,7 @@ Inicie o servidor de desenvolvimento do front-end:
 npm run dev
 ```
 
-Acesse a aplicação no navegador através do endereço indicado no terminal (geralmente `http://localhost:5173`).
+Acesse a aplicação no navegador através do endereço indicado no terminal (geralmente `http://localhost:3000`).
 
 ---
 
