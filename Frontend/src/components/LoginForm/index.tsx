@@ -6,6 +6,7 @@ import 'react-toastify/dist/ReactToastify.css';
 // Compatibilidade segura para Create React App ou Vite
 const rawApiUrl = (process.env?.REACT_APP_API_URL || (import.meta as any).env?.VITE_API_URL || '') as string;
 const apiUrl = rawApiUrl.replace(/\/$/, '');
+console.log("URL da API lida:", rawApiUrl); // Isso aparecerá nos logs de deploy do Netlify
 
 interface LoginFormProps {
   onLoginSuccess: (token: string, userData: { id: string; name: string; username: string }) => void;
