@@ -1,266 +1,196 @@
-import { useState, useEffect, FormEvent } from 'react';
+import { useState, FormEvent, ChangeEvent } from 'react';
 import { toast, ToastContainer } from 'react-toastify';
-import { Plus, SquarePen, Trash2, Check, X } from 'lucide-react';
+import { User, Lock, Type } from 'lucide-react';
 import 'react-toastify/dist/ReactToastify.css';
-const apiUrl = process.env.REACT_APP_API_URL;
 
-interface BodyProps {
-  token: string;
+// Compatibilidade para variáveis do Create React App ou Vite com fallback seguro
+const rawApiUrl = process.env.REACT_APP_API_URL || (import.meta as any).env?.VITE_API_URL || '';
+// Remove barra no final da URL se houver, evitando //duplas nas rotas
+const apiUrl = rawApiUrl.replace(/\/$/, '');
+
+interface LoginFormProps {
+  onLoginSuccess: (token: string, userData: { id: string; name: string; username: string }) => void;
 }
 
-interface Task {
-  _id: string;
-  id?: string;
-  title: string;
-  completed?: boolean;
-}
+export default function LoginForm({ onLoginSuccess }: LoginFormProps): JSX.Element {
+  const [isRegistering, setIsRegistering] = useState<boolean>(false);
+  const [name, setName] = useState<string>('');
+  const [username, setUsername] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
 
-export default function Body({ token }: BodyProps): JSX.Element {
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [title, setTitle] = useState<string>('');
-  
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editTitle, setEditTitle] = useState<string>('');
+  const handleNameChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    const filteredValue = value.replace(/[0-9]/g, '');
+    setName(filteredValue);
+  };
 
-  useEffect(() => {
-    const fetchTasks = async () => {
-      try {
-        const response = await fetch(`${apiUrl}/api/tasks`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
+  // Função utilitária para fazer o fetch tratando respostas vazias ou HTML
+  const makeRequest = async (url: string, body: object) => {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+
+    const text = await response.text();
+    let data;
+
+    try {
+      data = text ? JSON.parse(text) : {};
+    } catch {
+      // Se falhar ao converter em JSON, significa que o servidor respondeu com HTML (ex: 404/500 do servidor)
+      throw new Error(`Erro ao se comunicar com o servidor (Status ${response.status}). Verifique a URL da API.`);
+    }
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Ocorreu um erro ao processar a solicitação.');
+    }
+
+    return data;
+  };
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+
+    if (!apiUrl) {
+      toast.error('URL da API não configurada. Verifique as variáveis de ambiente.');
+      return;
+    }
+
+    if (isRegistering && name.trim().length < 2) {
+      toast.error('Por favor, digite um nome válido.');
+      return;
+    }
+
+    setLoading(true);
+
+    const endpoint = isRegistering 
+      ? `${apiUrl}/api/auth/register` 
+      : `${apiUrl}/api/auth/login`;
+
+    const payload = isRegistering 
+      ? { name: name.trim(), username: username.trim(), password } 
+      : { username: username.trim(), password };
+
+    try {
+      const data = await makeRequest(endpoint, payload);
+
+      if (isRegistering) {
+        toast.success('Conta criada com sucesso!');
+        
+        // Login automático logo após o registro
+        const loginData = await makeRequest(`${apiUrl}/api/auth/login`, {
+          username: username.trim(),
+          password
         });
 
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error || 'Erro ao carregar tarefas');
-        }
-
-        setTasks(data);
-        
-        if (data.length >= 10) {
-          toast.info('Você possui o limite máximo de 10 tarefas.');
-        }
-      } catch (err: any) {
-        toast.error(err.message || 'Erro de conexão com o servidor');
-      }
-    };
-
-    fetchTasks();
-  }, [token]);
-
-  const handleAddTask = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!title.trim()) return;
-
-    if (tasks.length >= 10) {
-      toast.warn('Você atingiu o limite máximo de 10 tarefas.');
-      return;
-    }
-
-    try {
-      const response = await fetch(`${apiUrl}/api/tasks`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ title })
-      });
-
-      const newTask = await response.json();
-
-      if (!response.ok) {
-        throw new Error(newTask.error || 'Erro ao criar tarefa');
+        toast.success(`Bem-vindo(a), ${loginData.user.name}!`);
+        onLoginSuccess(loginData.token, loginData.user);
+      } else {
+        toast.success(`Bem-vindo(a), ${data.user?.name || ''}!`);
+        onLoginSuccess(data.token, data.user);
       }
 
-      setTasks((prevTasks) => {
-        const updatedTasks = [...prevTasks, newTask];
-        
-        if (updatedTasks.length === 10) {
-          toast.warn('Você atingiu o limite máximo de 10 tarefas.');
-        }
-        
-        return updatedTasks;
-      });
-
-      setTitle(''); 
-      toast.success('Tarefa inserida com sucesso!');
     } catch (err: any) {
-      toast.error(err.message || 'Erro ao criar tarefa');
-    }
-  };
-
-  const handleUpdateTask = async (id: string) => {
-    if (!editTitle.trim()) return;
-
-    try {
-      const response = await fetch(`${apiUrl}/api/tasks/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ title: editTitle })
-      });
-
-      const updatedTask = await response.json();
-
-      if (!response.ok) {
-        throw new Error(updatedTask.error || 'Erro ao atualizar tarefa');
-      }
-
-      setTasks((prevTasks) =>
-        prevTasks.map((task) => ((task._id || task.id) === id ? updatedTask : task))
-      );
-      setEditingId(null);
-      setEditTitle('');
-      toast.success('Tarefa atualizada com sucesso!');
-    } catch (err: any) {
-      toast.error(err.message || 'Erro ao atualizar tarefa');
-    }
-  };
-
-  const handleDeleteTask = async (id: string) => {
-    if (!id) {
-      toast.error('ID da tarefa não foi encontrado.');
-      return;
-    }
-
-    try {
-      const response = await fetch(`${apiUrl}/api/tasks/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      const data = await response.json().catch(() => ({}));
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Erro ao deletar tarefa');
-      }
-
-      setTasks((prevTasks) => prevTasks.filter((task) => (task._id || task.id) !== id));
-      toast.success('Tarefa excluída com sucesso!');
-    } catch (err: any) {
-      toast.error(err.message || 'Erro ao deletar tarefa');
+      toast.error(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <main className="flex-1 flex justify-center items-start p-6 bg-gray-50">
-      {/* Container de notificações garantido no escopo do Body */}
-      <ToastContainer position="top-right" autoClose={3000} />
+    <div className="min-h-screen flex flex-col bg-gray-50">
+      <header className="bg-black text-white px-6 py-4 flex justify-center items-center">
+        <h1 className="text-xl font-medium tracking-wide">
+          Lista de Tarefas
+        </h1>
+      </header>
 
-      <div className="w-full max-w-xl border border-gray-300 rounded-xl p-8 bg-white shadow-sm">
-        
-        {/* Formulário para Adicionar Tarefa */}
-        <form onSubmit={handleAddTask} className="mb-6">
-          <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">
-            Adicione uma tarefa ({tasks.length}/10)
-          </label>
+      <div className="flex-1 flex items-center justify-center px-4 py-8">
+        <ToastContainer position="top-right" autoClose={3000} />
+
+        <div className="w-full max-w-md border border-gray-300 rounded-xl p-8 bg-white shadow-sm">
           
-          <div className="flex items-center gap-2">
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder={
-                tasks.length >= 10 
-                  ? 'Limite de 10 tarefas atingido' 
-                  : 'O que você precisa fazer?'
-              }
-              disabled={tasks.length >= 10}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-800 outline-none focus:border-black transition disabled:opacity-50 disabled:bg-gray-50"
-              required
-            />
+          <div className="text-center mb-6">
+            <h2 className="text-2xl font-bold text-gray-900">
+              {isRegistering ? 'Criar uma conta' : 'Entrar na sua conta'}
+            </h2>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {isRegistering && (
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Nome Completo</label>
+                <div className="relative flex items-center">
+                  <span className="absolute left-3 text-gray-400"><Type size={18} /></span>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={handleNameChange}
+                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:border-black transition"
+                    required
+                  />
+                </div>
+              </div>
+            )}
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Usuário</label>
+              <div className="relative flex items-center">
+                <span className="absolute left-3 text-gray-400"><User size={18} /></span>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:border-black transition"
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Senha</label>
+              <div className="relative flex items-center">
+                <span className="absolute left-3 text-gray-400"><Lock size={18} /></span>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:border-black transition"
+                  required
+                />
+              </div>
+            </div>
+
             <button
               type="submit"
-              disabled={tasks.length >= 10}
-              className="bg-black hover:bg-gray-800 disabled:bg-gray-400 text-white w-10 h-10 rounded-lg flex items-center justify-center transition shadow-sm shrink-0"
-              title="Adicionar"
+              disabled={loading}
+              className="w-full bg-black hover:bg-gray-800 text-white font-medium py-2.5 rounded-lg transition shadow-sm text-sm disabled:opacity-50"
             >
-              <Plus size={18} />
+              {loading ? 'Processando...' : (isRegistering ? 'Cadastrar e Entrar' : 'Entrar')}
             </button>
+          </form>
+
+          <div className="mt-6 text-center border-t border-gray-100 pt-4">
+            <p className="text-sm text-gray-600">
+              {isRegistering ? 'Já possui uma conta?' : 'Ainda não tem uma conta?'}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsRegistering(!isRegistering);
+                  setName('');
+                  setUsername('');
+                  setPassword('');
+                }}
+                className="ml-1 font-semibold text-black hover:underline"
+              >
+                {isRegistering ? 'Entrar' : 'Cadastre-se'}
+              </button>
+            </p>
           </div>
-        </form>
-
-        {/* Tabela de Tarefas */}
-        <div className="border border-gray-300 rounded-lg overflow-hidden">
-          <div className="bg-black text-white px-4 py-2.5 flex justify-between font-semibold text-sm">
-            <span>Tarefas ({tasks.length}/10)</span>
-            <span>Ações</span>
-          </div>
-
-          {tasks.length === 0 ? (
-            <div className="p-4 text-center text-gray-500 text-sm">
-              Nenhuma tarefa cadastrada.
-            </div>
-          ) : (
-            tasks.map((task) => {
-              const taskId = task._id || task.id || '';
-              return (
-                <div 
-                  key={taskId} 
-                  className="px-4 py-3 border-t border-gray-200 flex justify-between items-center text-gray-800 hover:bg-gray-50 transition text-sm gap-4"
-                >
-                  {editingId === taskId ? (
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <input
-                        type="text"
-                        value={editTitle}
-                        onChange={(e) => setEditTitle(e.target.value)}
-                        className="border border-gray-300 rounded px-2 py-1 text-sm w-full outline-none focus:border-black transition"
-                      />
-                      <button
-                        onClick={() => handleUpdateTask(taskId)}
-                        className="bg-black text-white p-1.5 rounded hover:bg-gray-800 transition flex items-center justify-center shrink-0"
-                        title="Salvar"
-                      >
-                        <Check size={16} />
-                      </button>
-                      <button
-                        onClick={() => setEditingId(null)}
-                        className="bg-gray-200 text-gray-700 p-1.5 rounded hover:bg-gray-300 transition flex items-center justify-center shrink-0"
-                        title="Cancelar"
-                      >
-                        <X size={16} />
-                      </button>
-                    </div>
-                  ) : (
-                    <span className="truncate min-w-0 flex-1">{task.title}</span>
-                  )}
-
-                  {editingId !== taskId && (
-                    <div className="flex items-center space-x-3 shrink-0">
-                      <button
-                        onClick={() => {
-                          setEditingId(taskId);
-                          setEditTitle(task.title);
-                        }}
-                        className="text-gray-500 hover:text-black transition p-1"
-                        title="Editar Tarefa"
-                      >
-                        <SquarePen size={18} />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteTask(taskId)}
-                        className="text-gray-500 hover:text-red-600 transition p-1"
-                        title="Excluir Tarefa"
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
-                  )}
-                </div>
-              );
-            })
-          )}
         </div>
-
       </div>
-    </main>
+    </div>
   );
 }
