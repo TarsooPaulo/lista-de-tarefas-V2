@@ -60,7 +60,7 @@ export default function Body({ token }: BodyProps): JSX.Element {
     }
 
     try {
-      const response = await fetch('http://localhost:5000/api/tasks', {
+      const response = await fetch(`${apiUrl}/api/tasks`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -96,7 +96,7 @@ export default function Body({ token }: BodyProps): JSX.Element {
     if (!editTitle.trim()) return;
 
     try {
-      const response = await fetch(`http://localhost:5000/api/tasks/${id}`, {
+      const response = await fetch(`${apiUrl}/api/tasks/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -129,7 +129,7 @@ export default function Body({ token }: BodyProps): JSX.Element {
     }
 
     try {
-      const response = await fetch(`http://localhost:5000/api/tasks/${id}`, {
+      const response = await fetch(`${apiUrl}/api/tasks/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
