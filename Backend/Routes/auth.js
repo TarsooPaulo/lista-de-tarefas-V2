@@ -31,6 +31,7 @@ router.post('/register', async (req, res) => {
     await newUser.save();
     res.status(201).json({ message: 'Usuário cadastrado com sucesso!' });
   } catch (err) {
+    console.error("ERRO DETALHADO NO REGISTER:", err)
     res.status(500).json({ error: 'Erro no servidor ao cadastrar usuário.' });
   }
 });
