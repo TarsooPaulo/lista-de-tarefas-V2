@@ -12,7 +12,7 @@ A V2 é uma versão completamente aprimorada. O objetivo principal foi elevar a 
 - **Back-end:** Node.js, Express.
 - **Banco de Dados:** MongoDB.
 - **Notificações:** React Toastify.
-- **Deploy:** Vercel (Front-end) & Render (Back-end).
+- **Deploy:** Netlify (Front-end) & Render (Back-end).
 
 ## ✨ Principais Funcionalidades
 
@@ -28,9 +28,75 @@ _(Insira aqui os prints do seu projeto ou GIFs demonstrando a aplicação em fun
 
 ## 🚀 Como Executar o Projeto Localmente
 
-Certifique-se de ter o [Node.js](https://nodejs.org/) instalado em sua máquina.
+Certifique-se de ter o [Node.js](https://nodejs.org/) e o [Git](https://git-scm.com/) instalados em sua máquina.
 
-1. **Clone este repositório:**
-   ```bash
-   git clone [https://github.com/SEU-USUARIO/SEU-REPOSITORIO.git](https://github.com/SEU-USUARIO/SEU-REPOSITORIO.git)
-   ```
+### 1. Clonar o repositório
+
+```bash
+git clone [https://github.com/SEU-USUARIO/SEU-REPOSITORIO.git](https://github.com/SEU-USUARIO/SEU-REPOSITORIO.git)
+cd SEU-REPOSITORIO
+```
+
+### 2. Configurar e Executar o Back-end
+
+Navegue até a pasta do servidor:
+
+```bash
+cd backend
+```
+
+Instale as dependências:
+
+```bash
+npm install
+```
+
+Crie um arquivo `.env` na raiz da pasta `backend` com as seguintes variáveis de ambiente:
+
+```env
+PORT=5000
+MONGO_URI=sua_uri_do_mongodb
+JWT_SECRET=sua_chave_secreta_jwt
+```
+
+Inicie o servidor em modo de desenvolvimento:
+
+```bash
+npm run dev
+```
+
+O servidor estará rodando no endereço `http://localhost:5000`.
+
+### 3. Configurar e Executar o Front-end
+
+Em um novo terminal, acesse a pasta da interface:
+
+```bash
+cd frontend
+```
+
+Instale as dependências:
+
+```bash
+npm install
+```
+
+Crie um arquivo `.env.local` na raiz da pasta `frontend`:
+
+```env
+VITE_API_URL=http://localhost:5000
+```
+
+Inicie o servidor de desenvolvimento do front-end:
+
+```bash
+npm run dev
+```
+
+Acesse a aplicação no navegador através do endereço indicado no terminal (geralmente `http://localhost:5173`).
+
+---
+
+## ✒️ Autor
+
+Desenvolvido por **Paulo de Tarso Ferreira da Silva**.
